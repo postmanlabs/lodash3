@@ -280,7 +280,19 @@
    * The `this` value is used if it's the global object to avoid Greasemonkey's
    * restricted `window` object, otherwise the `window` object is used.
    */
-  var root = freeGlobal || ((freeWindow !== (this && this.window)) && freeWindow) || freeSelf || this;
+  var root = freeGlobal || ((freeWindow !== (this && this.window)) && freeWindow) || freeSelf;
+
+  // We need to extract context-free globals if none was detected
+  !root && (root = function (thisContext, that) {
+    var prop, val, i = 0, ii = contextProps.length;
+    for (; i < ii; i++) {
+      prop = contextProps[i];
+      val = that[prop] || Function('return typeof ' + prop + '!== "undefined" && ' + prop)();
+      val && (thisContext[prop] = val);
+    }
+
+    return thisContext;
+  }({}, this));
 
   /*--------------------------------------------------------------------------*/
 
